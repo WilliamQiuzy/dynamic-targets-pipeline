@@ -1,0 +1,103 @@
+# ── OS / editor ──────────────────────────────────────────────────
+.DS_Store
+.vscode/
+.idea/
+
+# ── Python cache / tooling ───────────────────────────────────────
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+
+# ── Local environments ───────────────────────────────────────────
+.venv/
+venv/
+env/
+.venv_mapanything/
+.env
+
+# ── Runtime outputs ──────────────────────────────────────────────
+results/
+outputs/
+logs/
+cache/
+
+# ── Model weights (defense in depth — never commit binaries) ─────
+*.pt
+*.pth
+*.bin
+*.onnx
+*.safetensors
+*.ckpt
+*.gguf
+yolo11n.pt
+sam2_b.pt
+
+# ── Local model checkpoints ──────────────────────────────────────
+# Keep the rose/models/ dir tree (per-model README + .gitkeep) but
+# never commit weights themselves. Note: gitignore needs each parent
+# dir explicitly un-excluded before files inside it can be re-included.
+rose/models/**
+!rose/models/
+!rose/models/*/
+!rose/models/.gitkeep
+!rose/models/*/.gitkeep
+!rose/models/*/README.md
+data/models/
+
+# ── Local data / video caches ────────────────────────────────────
+rose/data/vlm4d_videos/
+rose/data/VLM4D-main/
+rose/data/MapAnything/
+data/vlm4d_videos/
+video_cache
+video_cache/
+
+# ── Cloned third-party model repos (installed in Dockerfile) ─────
+# 2026-05-13: track sam3/ and da3/ source (with ROSE patches applied) but
+# still exclude their model weights. Other vendored repos remain ignored
+# until we have a reason to track their sources.
+rose/vision/third_party/
+rose/vision/sam2/
+rose/vision/Video-Depth-Anything/
+rose/vision/recognize-anything/
+# Weight files (anywhere in the tree): ignore but keep source / configs
+*.pt
+*.pth
+*.safetensors
+*.bin
+*.ckpt
+*.onnx
+*.gguf
+*.pack
+# rose/models holds the downloaded weights; never check in
+rose/models/
+
+# ── Benchmark public datasets (clone locally per README) ─────────
+benchmark/VLM4D/
+benchmark/VLM4D-video/
+benchmark/DSR-Bench/
+benchmark/outputs_*/
+benchmark/4dsg_cache/
+
+# ── Assets: ignore subdirs except examples_videos ────────────────
+assets/*/
+!assets/examples_videos/
+
+# ── ROSE dataset (139GB+ videos — download from HuggingFace) ─────
+ROSE/
+
+# ── Paper / submission scratch ───────────────────────────────────
+papers/
+rose.tex
+egbib.bib
+*.zip
+ECCV_2026_Rebuttal_ROSE/
+ECCV_2026_Rebuttal_ROSE.zip
+
+# ── Local agent settings / personal docs ─────────────────────────
+.claude/
+培养计划.docx
+月度总结.docx

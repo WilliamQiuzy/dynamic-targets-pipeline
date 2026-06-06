@@ -1,0 +1,100 @@
+# Keep the build context small + reproducible.  Anything cloned or
+# downloaded at runtime/build-time is excluded here so `COPY . .` never
+# clobbers freshly-cloned upstream repos with whatever happens to be
+# on the developer's disk.
+
+# ── Python cache / tooling ───────────────────────────────────────
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+.venv/
+venv/
+env/
+.venv_*/
+.env
+.git/
+.github/
+.gitignore
+.dockerignore
+
+# ── Editor / OS ──────────────────────────────────────────────────
+.vscode/
+.idea/
+.DS_Store
+
+# ── Third-party vision repos ─────────────────────────────────────
+# 2026-05-13: sam3/ and da3/ are now vendored in the ROSE repo (with our
+# FA3 patches). They MUST be copied into the image so the editable
+# installs find them.  The remaining repos still aren't vendored, so they
+# stay excluded — Dockerfile only installs sam3 and da3 anyway.
+rose/vision/sam2/
+rose/vision/Video-Depth-Anything/
+rose/vision/recognize-anything/
+rose/vision/third_party/
+# Compiled artifacts inside the vendored vision repos
+rose/vision/sam3/**/__pycache__/
+rose/vision/sam3/**/*.so
+rose/vision/sam3/**/build/
+rose/vision/sam3/**/dist/
+rose/vision/sam3/**/*.egg-info/
+rose/vision/da3/**/__pycache__/
+rose/vision/da3/**/*.so
+rose/vision/da3/**/build/
+rose/vision/da3/**/dist/
+rose/vision/da3/**/*.egg-info/
+
+# ── Model weights (mounted or downloaded at runtime) ─────────────
+rose/models/**
+!rose/models/
+!rose/models/*/
+!rose/models/.gitkeep
+!rose/models/*/.gitkeep
+!rose/models/*/README.md
+
+# ── Local data / video / cache ───────────────────────────────────
+rose/data/vlm4d_videos/
+rose/data/VLM4D-main/
+rose/data/MapAnything/
+data/vlm4d_videos/
+data/models/
+video_cache/
+results/
+outputs/
+logs/
+cache/
+benchmark/VLM4D/
+benchmark/VLM4D-video/
+benchmark/DSR-Bench/
+benchmark/outputs_*/
+benchmark/4dsg_cache/
+ROSE/
+
+# ── Large binaries that should never enter the image ────────────
+*.pt
+*.pth
+*.bin
+*.onnx
+*.safetensors
+*.ckpt
+*.gguf
+*.mp4
+*.mov
+*.avi
+*.zip
+*.tar
+*.tar.gz
+*.pdf
+
+# ── Paper/submission scratch (heavy, irrelevant to runtime) ─────
+papers/
+ECCV_2026_Rebuttal_ROSE/
+ECCV_2026_Rebuttal_ROSE.zip
+ROSE_ECCV2026/
+ROSE_blog_submission.zip
+ROSE_supplement.pdf
+ROSE_ECCV2026.pdf
+assets/*/
+!assets/examples_videos/

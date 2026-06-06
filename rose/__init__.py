@@ -1,0 +1,1 @@
+"""ROSE package root."""

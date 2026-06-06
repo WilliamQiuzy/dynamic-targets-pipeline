@@ -1,0 +1,60 @@
+# ROSE Python dependencies
+# torch / torchvision / torchaudio come from the base image.
+# Pinned only where compatibility requires it.
+
+# ── Core numerics / IO ────────────────────────────────────────────
+einops
+huggingface_hub
+imageio
+imageio-ffmpeg
+numpy<2
+opencv-python-headless
+pillow
+pillow_heif
+safetensors
+omegaconf
+typer>=0.9.0
+
+# ── Geometry / 3D ─────────────────────────────────────────────────
+open3d
+trimesh
+plyfile
+pycolmap
+e3nn
+evo
+
+# ── Vision backbones ──────────────────────────────────────────────
+timm>=1.0.17
+ultralytics
+# xformers must match the base image's torch (2.4.x). Newer xformers
+# would silently upgrade torch and break CUDA driver compatibility.
+xformers==0.0.27.post2
+
+# ── SAM2 deps (we install SAM2 with --no-deps to avoid torch upgrade) ─
+hydra-core>=1.3
+
+# ── Video ─────────────────────────────────────────────────────────
+moviepy==1.0.3
+
+# ── Text / VLM ────────────────────────────────────────────────────
+ftfy==6.1.1
+regex
+iopath>=0.1.10
+# transformers >=4.57 ships native Qwen3-VL / DeepSeek-VL classes used by the
+# dynamic-targets instance namer (rose/reasoning/vlm/hf_namer.py). On torch 2.4
+# the namer installs a torch.distributed.tensor.device_mesh shim at import time.
+transformers>=4.57,<6
+accelerate
+bitsandbytes
+sentencepiece
+qwen-vl-utils>=0.0.11   # Qwen-VL image preprocessing (namer fallback path)
+
+# ── External VLM APIs ─────────────────────────────────────────────
+openai
+google-genai
+
+# ── Scientific ────────────────────────────────────────────────────
+scipy
+scikit-image
+tqdm
+requests
