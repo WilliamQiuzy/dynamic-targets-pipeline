@@ -173,8 +173,7 @@ info "  STEP 4/4: Verify installation"
 info "============================================"
 
 MISSING=0
-for d in rose/vision/sam3 rose/vision/da3 rose/vision/recognize-anything \
-         rose/vision/Video-Depth-Anything rose/vision/sam2; do
+for d in rose/vision/sam3 rose/vision/da3; do
     if [ -d "$d/.git" ]; then
         info "  ✓ $(basename $d)"
     else

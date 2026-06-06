@@ -38,8 +38,10 @@ monocular depth). Velocity is in the world frame, so it reflects true object mot
 
 ## Requirements
 
-- NVIDIA GPU. Best on **Hopper (H100/H200)** — the prebuilt image bakes in
-  Flash-Attention-3. Any CUDA GPU also works (falls back to FA2/SDPA).
+- **Any NVIDIA CUDA GPU.** Flash-Attention is **OFF by default**, so the model
+  runs on older cards too (e.g. V100) via PyTorch SDPA. On Hopper (H100/H200)
+  set `config.sam3.enable_fa3 = True` (with FA3 compiled into the image) for max
+  speed. To force FA off explicitly: env `ROSE_DISABLE_FA3=1`.
 - A Hugging Face account with access to the gated **`facebook/sam3`** checkpoint
   (accept the license on its HF model page), used by the tracker.
 
@@ -55,9 +57,10 @@ docker build -t dynamic-targets .
 # 2) Run on a CUDA GPU host, mounting a local weights cache.
 docker run --gpus all -it --rm -v $(pwd)/rose/models:/workspace/rose/rose/models dynamic-targets
 
-# 3) Inside the container: log in to HF and download model weights (~one-time).
-huggingface-cli login
-bash scripts/setup.sh --core      # downloads SAM3, DA3 (metric), Qwen3-VL-4B, FastSAM
+# 3) Inside the container: log in to HF, then ONE command downloads ALL models.
+huggingface-cli login             # needed for gated facebook/sam3 (accept its license first)
+bash scripts/setup.sh --core      # downloads ALL weights: SAM3 + DA3 (metric) + Qwen3-VL-4B + FastSAM
+                                  # (weights are NOT baked into the image; this fetches them once)
 ```
 
 ## Run

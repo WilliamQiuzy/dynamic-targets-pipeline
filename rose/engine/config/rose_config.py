@@ -134,6 +134,13 @@ class SAM3Config:
                                           # at ~25% more SAM3 time (2 multiplex buckets instead of 1).  Set back
                                           # to 16 for max speed.  2026-05-13: was restored from 8 → 16.
                                           # Dense sampling can surface more concurrent objects.
+    # Flash-Attention master switch (warm_server applies it at load).
+    #   enable_fa3 = False (DEFAULT): force every attention module to use_fa3=False
+    #     → PyTorch SDPA picks the best kernel per GPU (flash on A100+/Hopper,
+    #       mem-efficient/math on older cards like V100). Runs on ANY CUDA GPU.
+    #   enable_fa3 = True: Hopper (H100/H200) ONLY, with FA3 compiled in — max speed.
+    # Env override: ROSE_DISABLE_FA3=1 forces it off regardless.
+    enable_fa3: bool = False
     use_fa3: bool = True                  # 2026-05-31: OPTIMAL default (part of validated 2.51 Hz prod config).
                                           # Enables FA3 on SAM3's intended long-seq attention mix (NOT fa3_everywhere,
                                           # which flips the short-seq modules too and is ~3% SLOWER — keep that False).

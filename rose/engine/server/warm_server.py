@@ -269,23 +269,42 @@ class WarmModelPool:
             except Exception as e:
                 logger.warning("namer preload failed (non-fatal, will retry lazily): %s", e)
 
-        # 2026-05-13: flip every attention module that has a ``use_fa3``
-        # attribute to True.  After load the default mix is ~59 True / 20
-        # False (False: both mask decoders + detector.geometry_encoder).
-        # FA3 (FP8 matmul) is faster than the SDPA-flash path used when
-        # use_fa3=False; on H200 the casts to/from FP8 are free and quality
-        # holds on Easy1/Easy2.
+        # Flash-Attention policy.
+        # DEFAULT = OFF: force every attention module to use_fa3=False so the model
+        # runs on ANY CUDA GPU via PyTorch SDPA (torch auto-picks flash on A100+/
+        # Hopper, mem-efficient/math on older cards like V100). The SAM3 checkpoint
+        # otherwise loads with ~59 modules at use_fa3=True, which require the FA3
+        # (Hopper sm_90) kernel and CRASH on non-Hopper GPUs. Set
+        # config.sam3.enable_fa3=True (Hopper H100/H200 only, with FA3 compiled in)
+        # to flip them all ON for max speed.
         try:
-            if getattr(self.config.sam3, "fa3_everywhere", False):
-                root = self._sam3._predictor.model
-                flipped = 0
-                for _name, mod in root.named_modules():
-                    if hasattr(mod, "use_fa3") and not getattr(mod, "use_fa3"):
-                        mod.use_fa3 = True
-                        flipped += 1
-                logger.info("fa3_everywhere: flipped %d attention modules to use_fa3=True", flipped)
+            root = self._sam3._predictor.model
+            enable_fa3 = getattr(self.config.sam3, "enable_fa3", False) or \
+                getattr(self.config.sam3, "fa3_everywhere", False)
+            if os.environ.get("ROSE_DISABLE_FA3"):
+                enable_fa3 = False
+            target = bool(enable_fa3)
+            n = 0
+            for _name, mod in root.named_modules():
+                if hasattr(mod, "use_fa3") and bool(getattr(mod, "use_fa3")) != target:
+                    mod.use_fa3 = target
+                    n += 1
+            logger.info("Flash-Attention: use_fa3=%s on all attention modules (%d changed)%s",
+                        target, n, "" if target else " — SDPA fallback, runs on any GPU")
+            # When FA is OFF, also disable the Hopper-tuned torch.compile / CUDA-graph
+            # paths below: the mask-decoder compile re-enables use_fa3=True (a compile-
+            # correctness workaround that REQUIRES the FA3 kernel) and compile/bf16 on
+            # older GPUs (e.g. V100) is risky. Eager SDPA is correct and runs anywhere.
+            if not target:
+                for _f in ("compile_memory_encoder", "compile_mask_decoder_transformer",
+                           "compile_tracker_strong", "cuda_graph_memory_encoder", "enable_compile"):
+                    try:
+                        setattr(self.config.sam3, _f, False)
+                    except Exception:
+                        pass
+                logger.info("FA off → torch.compile/cudagraph disabled (pure eager SDPA, any-GPU safe)")
         except Exception as e:
-            logger.warning("fa3_everywhere flip failed (non-fatal): %s", e)
+            logger.warning("FA flag flip failed (non-fatal): %s", e)
 
         # Optional: torch.compile the SAM 3.1 memory-attention encoder. The
         # encoder.forward has a stable input shape ((HW=5184, num_buckets, C)
