@@ -8,8 +8,9 @@ client schema (per-frame visible objects with 9DOF oriented boxes, 2D pixel
 boxes, open-vocabulary instance names, and absolute world-frame velocity).
 """
 import os, sys, json, time, argparse
-os.environ.setdefault("YOLO_CONFIG_DIR", "/workspace/.ultralytics")
-ROOT = "/workspace/ROSE"
+# Repo root = parent of this scripts/ dir, so it works from ANY install location.
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+os.environ.setdefault("YOLO_CONFIG_DIR", os.path.join(ROOT, ".ultralytics"))
 sys.path.insert(0, ROOT); sys.path.insert(0, os.path.join(ROOT, "rose/vision/sam3"))
 from rose.engine.config.rose_config import ROSEConfig
 from rose.engine.server.warm_server import WarmModelPool, InferenceRequest
