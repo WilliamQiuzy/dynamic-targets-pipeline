@@ -45,23 +45,37 @@ monocular depth). Velocity is in the world frame, so it reflects true object mot
 - A Hugging Face account with access to the gated **`facebook/sam3`** checkpoint
   (accept the license on its HF model page), used by the tracker.
 
-## Setup (Docker, recommended)
+## Setup (prebuilt image — no build needed)
+
+A ready-to-run public image is on Docker Hub, so you do **not** need to build
+anything — just pull and run:
 
 ```bash
-# 1) Build the image (on any amd64 Docker host; no GPU needed to build).
-#    On a Hopper amd64 host this also compiles Flash-Attention-3 (~30 min).
-docker build -t dynamic-targets .
-#    On a non-amd64 host (e.g. Apple-Silicon Mac), skip the FA3 compile:
-#    docker build --platform linux/amd64 --build-arg SKIP_FA3=1 -t dynamic-targets .
+# 1) Pull the prebuilt public image (amd64; runs on any CUDA GPU).
+docker pull ziyueqiu/dynamic-targets:latest
 
-# 2) Run on a CUDA GPU host, mounting a local weights cache.
-docker run --gpus all -it --rm -v $(pwd)/rose/models:/workspace/rose/rose/models dynamic-targets
+# 2) Run on a CUDA GPU host. The mounted `models` dir caches weights across runs.
+docker run --gpus all -it --rm \
+  -v $(pwd)/models:/workspace/rose/rose/models \
+  ziyueqiu/dynamic-targets:latest
 
 # 3) Inside the container: log in to HF, then ONE command downloads ALL models.
-huggingface-cli login             # needed for gated facebook/sam3 (accept its license first)
-bash scripts/setup.sh --core      # downloads ALL weights: SAM3 + DA3 (metric) + Qwen3-VL-4B + FastSAM
-                                  # (weights are NOT baked into the image; this fetches them once)
+huggingface-cli login             # needed for gated facebook/sam3 + sam3.1 (accept their licenses first)
+bash scripts/setup.sh --core      # downloads ALL weights: SAM3 + SAM3.1 + DA3 (metric) + Qwen3-VL-4B + FastSAM
+                                  # (weights are NOT baked into the image; this fetches them once,
+                                  #  into the mounted models dir so later runs reuse them)
 ```
+
+<details>
+<summary>Build the image yourself instead (optional)</summary>
+
+```bash
+# On any amd64 Docker host; no GPU needed to build. Hopper amd64 also compiles FA3 (~30 min).
+docker build -t dynamic-targets .
+# On a non-amd64 host (e.g. Apple-Silicon Mac), skip the FA3 compile:
+docker buildx build --platform linux/amd64 --build-arg SKIP_FA3=1 -t dynamic-targets .
+```
+</details>
 
 ## Run
 
