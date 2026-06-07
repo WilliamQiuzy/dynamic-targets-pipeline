@@ -8,6 +8,8 @@ client schema (per-frame visible objects with 9DOF oriented boxes, 2D pixel
 boxes, open-vocabulary instance names, and absolute world-frame velocity).
 """
 import os, sys, json, time, argparse
+# Reduce CUDA fragmentation (helps memory-tight GPUs like V100/T4 avoid OOM).
+os.environ.setdefault("PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:True")
 # Repo root = parent of this scripts/ dir, so it works from ANY install location.
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 os.environ.setdefault("YOLO_CONFIG_DIR", os.path.join(ROOT, ".ultralytics"))

@@ -147,6 +147,10 @@ info "============================================"
 # HuggingFace ID: facebook/sam3
 download_hf_model "facebook/sam3" "rose/models/sam3"
 
+# --- SAM3.1 multiplex checkpoint (gated) — the tracker the pipeline ACTUALLY uses
+# (sam3.multiplex_model_path = rose/models/sam3.1, contains sam3.1_multiplex.pt) ---
+download_hf_model "facebook/sam3.1" "rose/models/sam3.1"
+
 # --- Depth Anything 3 (Nested Giant-Large, METRIC — the pipeline default) ---
 # DA3Config.model_path = rose/models/da3nested-giant-large (require_metric=True).
 # HuggingFace ID: depth-anything/DA3NESTED-Giant-Large
@@ -183,6 +187,7 @@ for d in rose/vision/sam3 rose/vision/da3; do
 done
 
 for f in rose/models/sam3/model.safetensors \
+         rose/models/sam3.1/sam3.1_multiplex.pt \
          rose/models/da3nested-giant-large/config.json \
          rose/models/qwen3-vl-4b-instruct/config.json \
          rose/models/fastsam/FastSAM-s.pt; do

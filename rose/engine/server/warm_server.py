@@ -252,6 +252,23 @@ class WarmModelPool:
         """Load all models into GPU memory. Call once at server start."""
         import torch
 
+        # Auto low-VRAM mode: on GPUs with < ~40GB (e.g. V100/T4/most cards), enable
+        # SAM3 CPU offload of state+video (big VRAM saving during propagation) and
+        # DON'T preload the 8GB instance namer (load it lazily at naming time, after
+        # the SAM3/DA3 peak). Without this, all models resident (~30GB) leave too
+        # little headroom and SAM3 propagation OOMs. H200/A100-80G keep full-resident
+        # speed. Also benefits from PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True.
+        self._low_vram = False
+        try:
+            total_gb = torch.cuda.get_device_properties(0).total_memory / 1e9
+            if total_gb < 40.0:
+                self._low_vram = True
+                self.config.sam3.offload_state_to_cpu = True
+                self.config.sam3.offload_video_to_cpu = True
+                logger.info("Low-VRAM GPU (%.0fGB < 40): SAM3 CPU offload ON + namer lazy-loaded.", total_gb)
+        except Exception:
+            pass
+
         logger.info("Loading DA3 model...")
         self._da3.load()
         logger.info("Loading FastSAM model...")
@@ -259,12 +276,15 @@ class WarmModelPool:
         logger.info("Loading SAM3 model...")
         self._sam3.load()
 
-        # Dynamic-targets export: preload the instance-naming VLM here (one-time)
-        # so the first video doesn't pay the ~16s Gemma load on its critical path.
+        # Dynamic-targets export: preload the instance-naming VLM (one-time) so the
+        # first video doesn't pay the load on its critical path — but ONLY on
+        # high-VRAM GPUs; on low-VRAM cards keep it lazy so it isn't resident during
+        # the SAM3 propagation peak.
         if getattr(self.config, "dynamic_targets", None) is not None and \
-                self.config.dynamic_targets.enabled and self.config.dynamic_targets.name_objects:
+                self.config.dynamic_targets.enabled and self.config.dynamic_targets.name_objects \
+                and not self._low_vram:
             try:
-                logger.info("Loading dynamic-targets instance namer (Gemma)...")
+                logger.info("Loading dynamic-targets instance namer...")
                 self._get_namer()
             except Exception as e:
                 logger.warning("namer preload failed (non-fatal, will retry lazily): %s", e)
