@@ -49,6 +49,13 @@ bitsandbytes
 sentencepiece
 qwen-vl-utils>=0.0.11   # Qwen-VL image preprocessing (namer fallback path)
 
+# ── SAM3 import chain + warm server (clean-room verified on a fresh GPU host) ──
+# sam3's package __init__ pulls in its training data loaders (pycocotools) and the
+# warm server imports fastapi; without these the build sanity-check import fails.
+pycocotools
+fastapi
+uvicorn
+
 # ── External VLM APIs ─────────────────────────────────────────────
 openai
 google-genai
